@@ -17,33 +17,47 @@ struct Arguments {
 impl Arguments {
     fn new(args: &[String]) -> Result<Arguments, &'static str> {
         if args.len() < 2 {
-            return Err("not enough arguments");
+            return Err("Not enough arguments");
         } else if args.len() > 4 {
-            return Err("too many arguments");
+            return Err("Too many arguments");
         }
+
         let f = args[1].clone();
+
         if let Ok(ipaddr) = IpAddr::from_str(&f) {
-            return Ok(Arguments {flag: String::from(""), ipaddr, threads: 4});
+            return Ok(Arguments {
+                flag: String::from(""),
+                ipaddr,
+                threads: 4
+            });
         } else {
             let flag = args[1].clone();
+            
             if flag.contains("-h") || flag.contains("-help") && args.len() == 2 {
-                println!("Usage: -j to select how many threads you want
-                \n\r       -h or -help to show this help message");
+                println!("Usage: -j to select how many threads you want\n\r-h or -help to show this help message");
                 return Err("help");
+
             } else if flag.contains("-h") || flag.contains("-help") {
-                return Err("too many arguments");
+                return Err("Too many arguments");
+
             } else if flag.contains("-j") {
                 let ipaddr = match IpAddr::from_str(&args[3]) {
                     Ok(s) => s,
-                    Err(_) => return Err("not a valid IPADDR; must be IPv4 or IPv6")
+                    Err(_) => return Err("Not a valid IPADDR; must be IPv4 or IPv6")
                 };
+
                 let threads = match args[2].parse::<u16>(){
                     Ok(s) => s,
-                    Err(_) => return Err("failed to parse thread number")
+                    Err(_) => return Err("Failed to parse thread number")
                 };
-                return Ok(Arguments{threads, flag, ipaddr});
+                return Ok(Arguments {
+                    threads,
+                    flag,
+                    ipaddr
+                });
+
             } else {
-                return Err("invalid syntax");
+                return Err("Invalid syntax");
             }
         } 
         
@@ -52,6 +66,7 @@ impl Arguments {
 
 fn scan(tx: Sender<u16>, start_port: u16, addr: IpAddr, num_threads: u16) {
     let mut port: u16 = start_port + 1;
+
     loop {
         match TcpStream::connect((addr, port)) {
             Ok(_) => {
@@ -87,6 +102,7 @@ fn main() {
     let num_threads = arguments.threads;
     let addr = arguments.ipaddr;
     let (tx, rx) = channel();
+
     for i in 0..num_threads {
         let tx = tx.clone();
 
@@ -96,14 +112,18 @@ fn main() {
     }
 
     let mut out = vec![];
+
     drop(tx);
     for p in rx {
         out.push(p);
     }    
 
     println!("");
+
     out.sort();
+
     for v in out {
         println!("{} is open", v);
     }
+
 }
